@@ -56,7 +56,7 @@ const networks: Network[] = [
   {
     chainId: wagmiChains.foundry.id,
     name: "Local network",
-    contractAddress: "",
+    contractAddress: "0x36d392a5da9817e8d91498a47c852c25f7a2073e",
     apiUrl: "http://localhost:8080",
   },
   {
