@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import { Token } from "../models/Token";
 
 export enum ToastType {
   Success = "success",
@@ -97,4 +98,15 @@ export const timeDiff = (date1: Date, date2: Date): string => {
 
 export const classNames = (...classes: any[]) => {
   return classes.filter(Boolean).join(" ");
+};
+
+export const respToToken = (resp: any): Token => {
+  return {
+    id: Number(resp.id),
+    minter: resp.minter,
+    uri: resp.uri,
+    price: resp.price,
+    supply: Number(resp.supply),
+    available: Number(resp.available),
+  };
 };

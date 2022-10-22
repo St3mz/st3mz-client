@@ -57,8 +57,8 @@ const networks: Network[] = [
   {
     chainId: wagmiChains.foundry.id,
     name: "Local network",
-    st3mzAddress: "0x36d392a5da9817e8d91498a47c852c25f7a2073e",
-    utilAddress: "0x16343ed8aa81aba9873ed9402979580a709de5e1",
+    st3mzAddress: "0x07b1a773adfd16c52ff29fa8d84a564073a9bdcf",
+    utilAddress: "0xea18f85a2c0d656503f73e974e197b4c4a04331d",
     apiUrl: "http://localhost:8080",
   },
   {

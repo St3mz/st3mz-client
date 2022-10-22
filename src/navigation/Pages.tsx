@@ -1,8 +1,17 @@
 import { HomePage } from "../pages/Home";
-import { UserPage } from "../pages/User";
 import { PrivacyPage } from "../pages/Privacy";
 import { TermsPage } from "../pages/Terms";
-import { HOME_ROUTE, USER_ROUTE, PRIVACY_ROUTE, TERMS_ROUTE } from "./Routes";
+import {
+  HOME_ROUTE,
+  LIST_ROUTE,
+  CREATE_ROUTE,
+  DETAIL_ROUTE,
+  PRIVACY_ROUTE,
+  TERMS_ROUTE,
+} from "./Routes";
+import { TokenListPage } from "../pages/TokenList";
+import { TokenDetailPage } from "../pages/TokenDetail";
+import { CreatePage } from "../pages/Create";
 export interface Page {
   key: string;
   route: string;
@@ -22,9 +31,23 @@ export const pages: Page[] = [
     label: "Home",
   },
   {
-    key: "user",
-    route: USER_ROUTE,
-    component: <UserPage />,
+    key: "browse",
+    route: LIST_ROUTE,
+    component: <TokenListPage />,
+    showInMenu: true,
+    label: "Browse",
+  },
+  {
+    key: "create",
+    route: CREATE_ROUTE,
+    component: <CreatePage />,
+    showInMenu: true,
+    label: "Create",
+  },
+  {
+    key: "detail",
+    route: DETAIL_ROUTE,
+    component: <TokenDetailPage />,
     showInMenu: false,
   },
   {
