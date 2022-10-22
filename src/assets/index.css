@@ -11,8 +11,8 @@
 }
 
 body {
-  background: #0b152c;
   background: linear-gradient(157deg, #0b152c 14%, #11285d 55%, #030d25 86%);
+  background-color: #0b152c;
 }
 
 ::-webkit-scrollbar {

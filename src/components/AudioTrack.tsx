@@ -1,11 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { MdPauseCircle, MdPlayCircle, MdStopCircle } from "react-icons/md";
+import {
+  MdPauseCircle,
+  MdPlayCircle,
+  MdStopCircle,
+  MdVolumeOff,
+  MdVolumeUp,
+} from "react-icons/md";
 import WaveSurfer from "wavesurfer.js";
 
 export const AudioTrack = ({ url }: { url: string }): JSX.Element => {
   const waveformRef = useRef<HTMLDivElement>(null);
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer>();
   const [isPlaying, setIsPlaying] = useState<boolean>();
+  const [isMuted, setIsMuted] = useState<boolean>();
 
   useEffect(() => {
     if (waveformRef.current && !wavesurfer) {
@@ -50,6 +57,18 @@ export const AudioTrack = ({ url }: { url: string }): JSX.Element => {
     wavesurfer.setCursorColor("#ffffff00");
   };
 
+  const mute = () => {
+    if (!wavesurfer) return;
+    wavesurfer.setMute(true);
+    setIsMuted(true);
+  };
+
+  const unmute = () => {
+    if (!wavesurfer) return;
+    wavesurfer.setMute(false);
+    setIsMuted(false);
+  };
+
   return (
     <div className="flex items-center">
       <div className="mr-2">
@@ -71,6 +90,20 @@ export const AudioTrack = ({ url }: { url: string }): JSX.Element => {
         />
       </div>
       <div ref={waveformRef} className="rounded-lg overflow-hidden w-1/2"></div>
+      <div className="ml-2">
+        {!isMuted && (
+          <MdVolumeUp
+            className="h-7 w-7 text-primary cursor-pointer"
+            onClick={mute}
+          />
+        )}
+        {isMuted && (
+          <MdVolumeOff
+            className="h-7 w-7 text-primary cursor-pointer"
+            onClick={unmute}
+          />
+        )}
+      </div>
     </div>
   );
 };

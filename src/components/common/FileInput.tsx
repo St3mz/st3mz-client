@@ -3,16 +3,16 @@ import { ChangeEvent, useRef } from "react";
 import { MdUpload } from "react-icons/md";
 
 interface Props {
-  onFileUpload: (file: File) => void;
+  onFilesUpload: (files: FileList) => void;
   accept?: string;
 }
 
-export const FileInput = ({ onFileUpload, accept }: Props): JSX.Element => {
+export const FileInput = ({ onFilesUpload, accept }: Props): JSX.Element => {
   const refFileInput = useRef<HTMLInputElement>(null);
 
   const handleUpload = (e: ChangeEvent<HTMLInputElement>): void => {
     if (!e?.target?.files?.length) return;
-    onFileUpload(e.target.files[0]);
+    onFilesUpload(e.target.files);
   };
 
   return (
@@ -23,6 +23,7 @@ export const FileInput = ({ onFileUpload, accept }: Props): JSX.Element => {
         accept={accept}
         onChange={(e) => handleUpload(e)}
         className="hidden"
+        multiple={true}
       ></input>
       <Button
         color="yellow"

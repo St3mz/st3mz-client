@@ -6,15 +6,15 @@ import {
   useWaitForTransaction,
 } from "wagmi";
 import { getNetwork } from "../../Config";
-import { fooContractAbi } from "../../contracts/fooContract";
+import st3mzContractData from "../../contracts/St3mz.json";
 export const Transaction = ({ chain }: { chain: Chain }): JSX.Element => {
   const {
     config,
     error: prepareError,
     isError: isPrepareError,
   } = usePrepareContractWrite({
-    address: getNetwork(chain.id).contractAddress,
-    abi: fooContractAbi,
+    address: getNetwork(chain.id).st3mzAddress,
+    abi: st3mzContractData.abi,
     functionName: "setFoo",
     args: [333],
   });

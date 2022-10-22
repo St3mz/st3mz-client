@@ -48,7 +48,8 @@ export type ChainId = typeof CHAINS[number]["id"];
 export interface Network {
   chainId: ChainId;
   name: string;
-  contractAddress: string;
+  st3mzAddress: string;
+  utilAddress: string;
   apiUrl: string;
 }
 
@@ -56,19 +57,22 @@ const networks: Network[] = [
   {
     chainId: wagmiChains.foundry.id,
     name: "Local network",
-    contractAddress: "0x36d392a5da9817e8d91498a47c852c25f7a2073e",
+    st3mzAddress: "0x36d392a5da9817e8d91498a47c852c25f7a2073e",
+    utilAddress: "0x16343ed8aa81aba9873ed9402979580a709de5e1",
     apiUrl: "http://localhost:8080",
   },
   {
     chainId: auroraTestnetChain.id,
     name: "Testnet",
-    contractAddress: "",
+    st3mzAddress: "0x5FbDB2315678afecb367f032d93F642f64180aa3.",
+    utilAddress: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512.",
     apiUrl: "http://localhost:8080",
   },
   {
     chainId: auroraChain.id,
     name: "Mainnet",
-    contractAddress: "",
+    st3mzAddress: "",
+    utilAddress: "",
     apiUrl: "http://localhost:8080",
   },
 ];
