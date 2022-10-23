@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { FileInput } from "./common/FileInput";
 
-const MAX_FILE_SIZE = 1024 * 1024 * 10; // 10MB = 1024 * 1024 * 10
+const MAX_FILE_SIZE = 1024 * 1024 * 100; // 100MB = 1024 * 1024 * 100
 
 interface Props {
   onUpload: (files: File[]) => void;
+  multiple?: boolean;
   className?: string;
 }
 
-export const UploadAudio = ({ onUpload, className }: Props): JSX.Element => {
+export const UploadAudio = ({
+  onUpload,
+  multiple,
+  className,
+}: Props): JSX.Element => {
   const [dropZoneActive, setDropZoneActive] = useState<boolean>(false);
 
   const processFiles = (files: FileList): void => {
@@ -41,12 +46,13 @@ export const UploadAudio = ({ onUpload, className }: Props): JSX.Element => {
       }}
     >
       <div className="flex flex-col text-center">
-        <span>Drop or upload audio files</span>
-        <span>max size 10MB</span>
+        <span>Drop or upload audio {multiple ? "files" : "file"}</span>
+        <span>max size 100MB</span>
       </div>
       <FileInput
         onFilesUpload={(files: FileList) => processFiles(files)}
         accept="audio/*"
+        multiple={multiple}
       ></FileInput>
     </div>
   );

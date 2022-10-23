@@ -5,9 +5,14 @@ import { MdUpload } from "react-icons/md";
 interface Props {
   onFilesUpload: (files: FileList) => void;
   accept?: string;
+  multiple?: boolean;
 }
 
-export const FileInput = ({ onFilesUpload, accept }: Props): JSX.Element => {
+export const FileInput = ({
+  onFilesUpload,
+  accept,
+  multiple,
+}: Props): JSX.Element => {
   const refFileInput = useRef<HTMLInputElement>(null);
 
   const handleUpload = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -23,7 +28,7 @@ export const FileInput = ({ onFilesUpload, accept }: Props): JSX.Element => {
         accept={accept}
         onChange={(e) => handleUpload(e)}
         className="hidden"
-        multiple={true}
+        multiple={multiple}
       ></input>
       <Button
         color="yellow"

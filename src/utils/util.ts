@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import { ipfsGatewayUrl } from "../Config";
 import { Token } from "../models/Token";
 
 export enum ToastType {
@@ -109,4 +110,8 @@ export const respToToken = (resp: any): Token => {
     supply: Number(resp.supply),
     available: Number(resp.available),
   };
+};
+
+export const getIpfsUri = (baseUri: string): string => {
+  return baseUri.replace("ipfs://", ipfsGatewayUrl);
 };

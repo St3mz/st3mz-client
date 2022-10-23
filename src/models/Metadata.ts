@@ -7,6 +7,7 @@ export interface Metadata {
   name: string;
   description: string;
   file: string;
+  genre: string;
   bpm: number;
   format: string;
   duration: number;

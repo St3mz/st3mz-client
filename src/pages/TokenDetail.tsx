@@ -7,7 +7,10 @@ import { getNetwork } from "../Config";
 import st3mzContractData from "../contracts/St3mz.json";
 import utilContractData from "../contracts/St3mzUtil.json";
 import { Token } from "../models/Token";
-import { launchToast, respToToken, ToastType } from "../utils/util";
+import { getIpfsUri, launchToast, respToToken, ToastType } from "../utils/util";
+import axios from "axios";
+import { Metadata } from "../models/Metadata";
+import { AudioTrack } from "../components/AudioTrack";
 
 export const TokenDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
@@ -15,10 +18,15 @@ export const TokenDetailPage = (): JSX.Element => {
   const provider = useProvider();
   const { data: signer } = useSigner();
   const [token, setToken] = useState<Token>();
+  const [metadata, setMetadata] = useState<Metadata>();
 
   useEffect(() => {
     if (id) getToken();
   }, [id]);
+
+  useEffect(() => {
+    if (token) getMetadata();
+  }, [token]);
 
   const getToken = async () => {
     if (!activeChain || !provider) {
@@ -33,12 +41,16 @@ export const TokenDetailPage = (): JSX.Element => {
 
     try {
       const resp = await utilContract.getToken(id);
-      console.log(resp);
       setToken(respToToken(resp));
     } catch (e) {
       console.log(e);
       launchToast("An error occurred fetching item data.", ToastType.Error);
     }
+  };
+
+  const getMetadata = async () => {
+    const { data } = await axios.get(getIpfsUri(token!.uri));
+    setMetadata(data);
   };
 
   const buy = async () => {
@@ -77,6 +89,25 @@ export const TokenDetailPage = (): JSX.Element => {
           <div>Price: {ethers.utils.formatEther(token.price)}</div>
           <div>Supply: {token.supply}</div>
           <div>Available: {token.available}</div>
+          {metadata && (
+            <div className="text-gray-500 py-4">
+              <div>Name: {metadata.name}</div>
+              <div>Description: {metadata.description}</div>
+              <div>Duration: {metadata.duration}</div>
+              <div>Format: {metadata.format}</div>
+              <div>Genre: {metadata.genre}</div>
+              <div>License: {metadata.license}</div>
+              <div>BPM: {metadata.bpm}</div>
+              <AudioTrack url={getIpfsUri(metadata.file)} />
+              <div className="mt-5">STEMS</div>
+              {metadata.stems.map((stem, index) => (
+                <div className="py-2" key={index}>
+                  <div>{stem.description}</div>
+                  <AudioTrack url={getIpfsUri(stem.file)} />
+                </div>
+              ))}
+            </div>
+          )}
           <Button onClick={buy}>Buy</Button>
         </div>
       )}

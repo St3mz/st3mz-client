@@ -2,6 +2,10 @@ import { Chain, chain as wagmiChains } from "wagmi";
 
 export const APP_NAME = "St3mz";
 
+export const ipfsGatewayUrl = "https://nftstorage.link/ipfs/";
+// export const ipfsGatewayUrl = "https://infura-ipfs.io/ipfs/";
+// export const ipfsGatewayUrl = "https://gateway.pinata.cloud/ipfs/";
+
 export const auroraChain: Chain = {
   id: 1313161554,
   name: "Aurora",
