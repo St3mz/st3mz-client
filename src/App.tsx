@@ -38,16 +38,18 @@ function App() {
             {!getBannerDismissed() && <BetaBanner />}
             <NetworkBanner />
             <Navbar />
-            <Routes>
-              {pages.map((page) => (
-                <Route
-                  key={page.key}
-                  path={page.route}
-                  element={page.component}
-                />
-              ))}
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            <div className="px-28 py-12 text-justify">
+              <Routes>
+                {pages.map((page) => (
+                  <Route
+                    key={page.key}
+                    path={page.route}
+                    element={page.component}
+                  />
+                ))}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </div>
           </ConnectKitProvider>
         </WagmiConfig>
 

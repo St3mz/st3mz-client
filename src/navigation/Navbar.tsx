@@ -1,7 +1,7 @@
 import { Disclosure } from "@headlessui/react";
 import { MdMenu, MdClose } from "react-icons/md";
 import { pages } from "./Pages";
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { classNames } from "../utils/util";
 import { ConnectKitButton } from "connectkit";
 
@@ -26,14 +26,16 @@ export const Navbar = (): JSX.Element => {
                 </div>
                 <div className="flex-1 flex items-center justify-center sm:items-stretch sm:justify-start">
                   <div className="flex-shrink-0 flex items-center">
-                    <img
-                      className="block lg:hidden h-8 w-auto"
-                      src="/images/logo_192.png"
-                    />
-                    <img
-                      className="hidden lg:block h-8 w-auto pl-2"
-                      src="/images/logo_full.png"
-                    />
+                    <Link to="/">
+                      <img
+                        className="block lg:hidden h-8 w-auto"
+                        src="/images/logo_192.png"
+                      />
+                      <img
+                        className="hidden lg:block h-8 w-auto pl-2"
+                        src="/images/logo_full.png"
+                      />
+                    </Link>
                   </div>
                   <div className="hidden sm:block sm:ml-6">
                     <div className="flex space-x-4">
@@ -46,13 +48,15 @@ export const Navbar = (): JSX.Element => {
                               className={({ isActive }) =>
                                 classNames(
                                   isActive
-                                    ? "border-b-4 border-solid border-primary text-white"
-                                    : "text-gray-300 hover:text-white",
-                                  "block px-3 py-2 font-medium text-xl"
+                                    ? "border-yellow-400 text-yellow-400"
+                                    : "border-transparent text-primary hover:text-yellow-400",
+                                  "block border-b-4 px-3 py-2 font-medium text-xl"
                                 )
                               }
                             >
-                              {page.label}
+                              <span className="relative top-1">
+                                {page.label}
+                              </span>
                             </NavLink>
                           )
                       )}

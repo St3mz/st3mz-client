@@ -1,7 +1,7 @@
 import { Contract } from "ethers";
 import { useEffect, useState } from "react";
 import { useNetwork, useProvider } from "wagmi";
-import { getNetwork } from "../Config";
+import { auroraChain, getNetwork } from "../Config";
 import { Token } from "../models/Token";
 import utilContractData from "../contracts/St3mzUtil.json";
 import { launchToast, respToToken, ToastType } from "../utils/util";
@@ -17,12 +17,12 @@ export const TokenListPage = (): JSX.Element => {
   }, []);
 
   const getTokens = async () => {
-    if (!activeChain || !provider) {
+    if (!provider) {
       return;
     }
 
     const utilContract = new Contract(
-      getNetwork(activeChain.id).utilAddress,
+      getNetwork(activeChain?.id || auroraChain.id).utilAddress,
       utilContractData.abi,
       provider
     );
@@ -41,11 +41,15 @@ export const TokenListPage = (): JSX.Element => {
   };
 
   return (
-    <div className="p-10">
-      <div>Token List Page</div>
-      {tokens.map((token) => (
-        <TokenCard key={token.id} token={token}></TokenCard>
-      ))}
+    <div>
+      <h1 className="text-6xl font-bold pb-2 text-center">Browse NFTs</h1>
+      <div className="container my-12 mx-auto px-4 md:px-12">
+        <div className="flex flex-wrap -mx-1 lg:-mx-4">
+          {tokens.map((token) => (
+            <TokenCard key={token.id} token={token}></TokenCard>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

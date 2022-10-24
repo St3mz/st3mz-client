@@ -26,9 +26,7 @@ export const pages: Page[] = [
     key: "home",
     route: HOME_ROUTE,
     component: <HomePage />,
-    showInMenu: true,
-    icon: "",
-    label: "Home",
+    showInMenu: false,
   },
   {
     key: "browse",

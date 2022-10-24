@@ -4,7 +4,7 @@ import { PRIVACY_ROUTE } from "../navigation/Routes";
 
 export const TermsPage = (): JSX.Element => {
   return (
-    <div className="px-28 py-12 text-justify">
+    <div>
       <h1 className="text-5xl font-bold pb-2">Terms and Conditions of Use</h1>
       <h2 className="text-3xl font-bold pt-4">1. Terms</h2>
       <p className="pt-1">

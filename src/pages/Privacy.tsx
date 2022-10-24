@@ -2,7 +2,7 @@ import { APP_NAME } from "../Config";
 
 export const PrivacyPage = (): JSX.Element => {
   return (
-    <div className="px-28 py-12 text-justify">
+    <div>
       <h1 className="text-5xl font-bold pb-2">Privacy Policy</h1>
       <p className="pt-1">
         At {APP_NAME}, accessible from https://XXXXXXXX, one of our main

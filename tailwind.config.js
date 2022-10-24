@@ -10,7 +10,7 @@ module.exports = withMT({
         primary: "#c7ad1c",
         secondary: "#e88605",
         "prim-bg": "#0b152c",
-        "sec-bg": "#11285d",
+        "sec-bg": "#0a0832",
         "sec-text": "#a8a29e",
       },
     },

@@ -8,7 +8,13 @@ import {
 } from "react-icons/md";
 import WaveSurfer from "wavesurfer.js";
 
-export const AudioTrack = ({ url }: { url: string }): JSX.Element => {
+export const AudioTrack = ({
+  url,
+  onDurationRead,
+}: {
+  url: string;
+  onDurationRead?: (duration: number) => void;
+}): JSX.Element => {
   const waveformRef = useRef<HTMLDivElement>(null);
   const [wavesurfer, setWavesurfer] = useState<WaveSurfer>();
   const [isPlaying, setIsPlaying] = useState<boolean>();
@@ -33,6 +39,10 @@ export const AudioTrack = ({ url }: { url: string }): JSX.Element => {
       });
       wavesurferInstance.on("seek", () => {
         wavesurferInstance.setCursorColor("#ffffff");
+      });
+      wavesurferInstance.on("ready", () => {
+        if (onDurationRead)
+          onDurationRead(Math.round(wavesurferInstance.getDuration()));
       });
     }
   }, []);

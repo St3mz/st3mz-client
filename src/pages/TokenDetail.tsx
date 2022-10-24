@@ -3,7 +3,7 @@ import { Contract, ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useNetwork, useSigner, useProvider } from "wagmi";
-import { getNetwork } from "../Config";
+import { auroraChain, getNetwork } from "../Config";
 import st3mzContractData from "../contracts/St3mz.json";
 import utilContractData from "../contracts/St3mzUtil.json";
 import { Token } from "../models/Token";
@@ -29,12 +29,12 @@ export const TokenDetailPage = (): JSX.Element => {
   }, [token]);
 
   const getToken = async () => {
-    if (!activeChain || !provider) {
+    if (!provider) {
       return;
     }
 
     const utilContract = new Contract(
-      getNetwork(activeChain.id).utilAddress,
+      getNetwork(activeChain?.id || auroraChain.id).utilAddress,
       utilContractData.abi,
       provider
     );
@@ -79,7 +79,7 @@ export const TokenDetailPage = (): JSX.Element => {
   };
 
   return (
-    <div className="p-8">
+    <div>
       <div>Detail Page</div>
       {token && (
         <div>
