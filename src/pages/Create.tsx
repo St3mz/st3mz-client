@@ -10,6 +10,8 @@ import { UploadAudio } from "../components/UploadAudio";
 import { useState } from "react";
 import { AudioTrack } from "../components/AudioTrack";
 import { UploadImage } from "../components/UploadImage";
+import { useNavigate } from "react-router-dom";
+import { DETAIL_ROUTE } from "../navigation/Routes";
 
 const initialMetadata: Metadata = {
   name: "",
@@ -42,12 +44,13 @@ const initialLicenses: any[] = [
 ];
 
 export const CreatePage = (): JSX.Element => {
+  const navigate = useNavigate();
   const { chain: activeChain } = useNetwork();
   const { data: signer } = useSigner();
   const [track, setTrack] = useState<File>();
   const [stems, setStems] = useState<File[]>([]);
   const [image, setImage] = useState<File>();
-  const [cid, setCid] = useState<string>();
+  // const [cid, setCid] = useState<string>();
   const [metadata, setMetadata] = useState<Metadata>(initialMetadata);
   const [licenses, setLicenses] = useState<any[]>(initialLicenses);
   const [amount, setAmount] = useState<number>(0);
@@ -59,9 +62,11 @@ export const CreatePage = (): JSX.Element => {
   });
 
   const create = async () => {
-    if (!signer || !activeChain || !cid || !price || !amount) {
+    if (!signer || !activeChain || !price || !amount) {
       return;
     }
+
+    const cid = await storeIpfs();
 
     const st3mzContract = new Contract(
       getNetwork(activeChain.id).st3mzAddress,
@@ -76,7 +81,9 @@ export const CreatePage = (): JSX.Element => {
         ethers.utils.parseEther(price.toString())
       );
       const events = (await tx.wait()).events;
-      console.log(events[0].args);
+      const id = Number(events[0].args.id);
+      launchToast("NFT created successfully.");
+      navigate(DETAIL_ROUTE.replace(":id", id.toString()));
     } catch (e) {
       console.log(e);
       launchToast("An error occurred creating the item.", ToastType.Error);
@@ -118,12 +125,14 @@ export const CreatePage = (): JSX.Element => {
       return;
     }
 
+    launchToast("Uploading files to IPFS...", ToastType.Info);
     const filesCid = await nftStorage.storeDirectory([track, ...stems, image]);
+
+    launchToast("Uploading metadata to IPFS...", ToastType.Info);
     const metadataCid = await nftStorage.storeBlob(
       generateMetadata(filesCid, licensesMeta)
     );
-    console.log(metadataCid);
-    setCid(metadataCid);
+    return metadataCid;
   };
 
   const generateMetadata = (
@@ -155,166 +164,30 @@ export const CreatePage = (): JSX.Element => {
     <div>
       <h1 className="text-6xl font-bold pb-2 text-center">Create NFT</h1>
       <div className="flex mt-12">
-        <div className="w-1/2 pr-12">
-          <div className="mb-5">
-            <Input
-              variant="outlined"
-              label="Name"
-              size="lg"
-              type="text"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) =>
-                setMetadata({ ...metadata, name: e.target.value })
-              }
-            />
-          </div>
-          <div className="mb-5">
-            <Textarea
-              variant="outlined"
-              label="Description"
-              size="lg"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) =>
-                setMetadata({ ...metadata, description: e.target.value })
-              }
-            />
-          </div>
-          <div className="mb-5">
-            <Input
-              variant="outlined"
-              label="Genre"
-              size="lg"
-              type="text"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) =>
-                setMetadata({ ...metadata, genre: e.target.value })
-              }
-            />
-          </div>
-          <div className="mb-5">
-            <Input
-              variant="outlined"
-              label="BPM"
-              size="lg"
-              type="number"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) =>
-                setMetadata({ ...metadata, bpm: Number(e.target.value) })
-              }
-            />
-          </div>
-          <div className="mb-5">
-            <Input
-              variant="outlined"
-              label="Total supply"
-              size="lg"
-              type="number"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) => setAmount(Number(e.target.value) || 0)}
-            />
-          </div>
-          <div className="mb-5">
-            <Input
-              variant="outlined"
-              label="Unit price"
-              size="lg"
-              type="number"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) => setPrice(Number(e.target.value))}
-            />
-          </div>
-          <div className="mb-5">
-            <div className="flex items-center">
-              <Checkbox
-                color="orange"
-                onChange={(e) => {
-                  const _licenses = [...licenses];
-                  _licenses[0].selected = e.target.checked;
-                  setLicenses(_licenses);
-                }}
-              />
-              <span>Basic</span>
-            </div>
-            <Input
-              variant="outlined"
-              label="Amount required"
-              size="lg"
-              type="number"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) => {
-                const _licenses = [...licenses];
-                _licenses[0].tokensRequired = e.target.value;
-                setLicenses(_licenses);
-              }}
-            />
-          </div>
-          <div className="mb-5">
-            <div className="flex items-center">
-              <Checkbox
-                color="orange"
-                onChange={(e) => {
-                  const _licenses = [...licenses];
-                  _licenses[1].selected = e.target.checked;
-                  setLicenses(_licenses);
-                }}
-              />
-              <span>Commercial</span>
-            </div>
-            <Input
-              variant="outlined"
-              label="Amount required"
-              size="lg"
-              type="number"
-              color="orange"
-              className="!text-white bg-sec-bg error"
-              onChange={(e) => {
-                const _licenses = [...licenses];
-                _licenses[1].tokensRequired = e.target.value;
-                setLicenses(_licenses);
-              }}
-            />
-          </div>
-          <div className="mb-5">
-            <div className="flex items-center">
-              <Checkbox
-                color="orange"
-                onChange={(e) => {
-                  const _licenses = [...licenses];
-                  _licenses[2].selected = e.target.checked;
-                  setLicenses(_licenses);
-                }}
-              />
-              <span>Exclusive</span>
-              <span className="ml-5">All supply</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="w-1/2 pl-12">
-          <div className="">
-            <div>Upload track</div>
+        {/* Left column */}
+        <div className="w-1/2 flex flex-col items-center">
+          {/* Track */}
+          <div className="mb-6">
+            <div className="font-bold text-xl mb-2">Upload track</div>
             <UploadAudio
               onUpload={(files) => setTrack(files[0])}
               className="w-56"
             ></UploadAudio>
-            {track && (
+          </div>
+          {track && (
+            <div className="mb-16 w-full">
+              <div className="mb-2">{track.name}</div>
               <AudioTrack
                 url={URL.createObjectURL(track)}
                 onDurationRead={(_duration) =>
                   setMetadata({ ...metadata, duration: _duration })
                 }
               />
-            )}
-          </div>
-          <div>
-            <div>Upload stems</div>
+            </div>
+          )}
+          {/* Stems */}
+          <div className="pb-6">
+            <div className="font-bold text-xl mb-2">Upload stems</div>
             <UploadAudio
               onUpload={(files) => {
                 setStems([...stems, ...files]);
@@ -329,38 +202,199 @@ export const CreatePage = (): JSX.Element => {
               multiple={true}
               className="w-56"
             ></UploadAudio>
-            <div className="p-10">
-              {stems.map((stem, index) => (
-                <div className="mb-5" key={index}>
-                  <AudioTrack url={URL.createObjectURL(stem)} />
-                  <div>{stem.name}</div>
-                  <div className="mb-5">
-                    <Input
-                      variant="outlined"
-                      label="Description"
-                      size="lg"
-                      type="text"
-                      color="orange"
-                      className="!text-white bg-sec-bg error"
-                      onChange={(e) => {
-                        const stemsMeta = JSON.parse(
-                          JSON.stringify(metadata.stems)
-                        );
-                        stemsMeta[index].description = e.target.value;
-                        setMetadata({ ...metadata, stems: stemsMeta });
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
           </div>
-          <div>
-            <div>Upload cover</div>
+          <div className="w-full">
+            {stems.map((stem, index) => (
+              <div className="mb-12" key={index}>
+                <div className="mb-2">{stem.name}</div>
+                <AudioTrack url={URL.createObjectURL(stem)} />
+                <div className="mt-3">
+                  <Input
+                    variant="outlined"
+                    label="Description"
+                    size="lg"
+                    type="text"
+                    color="orange"
+                    className="!text-white bg-sec-bg error"
+                    onChange={(e) => {
+                      const stemsMeta = JSON.parse(
+                        JSON.stringify(metadata.stems)
+                      );
+                      stemsMeta[index].description = e.target.value;
+                      setMetadata({ ...metadata, stems: stemsMeta });
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div className="w-1/2 px-12">
+          {/* Cover image */}
+          <div className="mb-10">
+            <div className="font-bold text-xl mb-2">Upload cover</div>
             <UploadImage
               onUpload={(file: File) => setImage(file)}
               className="h-56 w-56"
             />
+          </div>
+          {/* Name */}
+          <div className="mb-5">
+            <Input
+              variant="outlined"
+              label="Name"
+              size="lg"
+              type="text"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, name: e.target.value })
+              }
+            />
+          </div>
+          {/* Description */}
+          <div className="mb-5">
+            <Textarea
+              variant="outlined"
+              label="Description"
+              size="lg"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, description: e.target.value })
+              }
+            />
+          </div>
+          {/* Genre */}
+          <div className="mb-5">
+            <Input
+              variant="outlined"
+              label="Genre"
+              size="lg"
+              type="text"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, genre: e.target.value })
+              }
+            />
+          </div>
+          {/* BPM */}
+          <div className="mb-5 w-48">
+            <Input
+              variant="outlined"
+              label="BPM"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, bpm: Number(e.target.value) })
+              }
+            />
+          </div>
+          {/* Total supply */}
+          <div className="mb-5 w-48">
+            <Input
+              variant="outlined"
+              label="Total supply"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) => setAmount(Number(e.target.value) || 0)}
+            />
+          </div>
+          {/* Unit price */}
+          <div className="mb-5 w-48">
+            <Input
+              variant="outlined"
+              label="Unit price"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) => setPrice(Number(e.target.value))}
+            />
+          </div>
+          {/* Licenses */}
+          <div className="font-bold text-xl mt-8 mb-2">Licensing</div>
+          {/* Basic */}
+          <div className="flex mb-2">
+            <div className="flex items-center -ml-3 mr-4">
+              <Checkbox
+                color="orange"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[0].selected = e.target.checked;
+                  setLicenses(_licenses);
+                }}
+              />
+              <span>Basic</span>
+            </div>
+            <div className="w-48">
+              <Input
+                variant="outlined"
+                label="Amount required"
+                size="lg"
+                type="number"
+                color="orange"
+                className="!text-white bg-sec-bg error"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[0].tokensRequired = e.target.value;
+                  setLicenses(_licenses);
+                }}
+              />
+            </div>
+          </div>
+          {/* Commercial */}
+          <div className="flex mb-2">
+            <div className="flex items-center -ml-3 mr-4">
+              <Checkbox
+                color="orange"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[1].selected = e.target.checked;
+                  setLicenses(_licenses);
+                }}
+              />
+              <span>Commercial</span>
+            </div>
+            <div className="w-48">
+              <Input
+                variant="outlined"
+                label="Amount required"
+                size="lg"
+                type="number"
+                color="orange"
+                className="!text-white bg-sec-bg error"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[1].tokensRequired = e.target.value;
+                  setLicenses(_licenses);
+                }}
+              />
+            </div>
+          </div>
+          {/* Exclusive */}
+          <div className="mb-4">
+            <div className="flex items-center -ml-3">
+              <Checkbox
+                color="orange"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[2].selected = e.target.checked;
+                  setLicenses(_licenses);
+                }}
+              />
+              <span>Exclusive</span>
+              <span className="ml-5 text-sec-text font-bold text-lg">
+                All supply
+              </span>
+            </div>
           </div>
         </div>
       </div>

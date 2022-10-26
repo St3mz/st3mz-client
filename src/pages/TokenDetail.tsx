@@ -87,12 +87,13 @@ export const TokenDetailPage = (): JSX.Element => {
     <div className="flex">
       {token && metadata && (
         <>
+          {/* Left column */}
           <div className="w-2/5">
             {metadata.image && (
               <img className="rounded-xl" src={getIpfsUri(metadata.image)} />
             )}
-            <div className="mt-3">
-              <span className="text-xl">{metadata.description}</span>
+            <div className="my-3">
+              <span className="text-lg font-light">{metadata.description}</span>
             </div>
             <div>
               <span>Creator</span>{" "}
@@ -125,7 +126,8 @@ export const TokenDetailPage = (): JSX.Element => {
             </div>
           </div>
 
-          <div className="w-3/5">
+          {/* Right column */}
+          <div className="w-3/5 pl-16">
             <div className="mb-4">
               <span className="text-4xl font-bold">{metadata.name}</span>
             </div>

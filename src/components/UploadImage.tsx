@@ -44,7 +44,7 @@ export const UploadImage = ({ onUpload, className }: Props): JSX.Element => {
       }}
     >
       {fileData ? (
-        <img src={fileData} className="object-cover h-40 w-full" />
+        <img src={fileData} className="object-cover" />
       ) : (
         <>
           <div className="flex flex-col text-center">
