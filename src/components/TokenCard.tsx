@@ -1,9 +1,8 @@
-import { Button } from "@material-tailwind/react";
 import { ethers } from "ethers";
 import { Link } from "react-router-dom";
 import { Token } from "../models/Token";
 import { DETAIL_ROUTE } from "../navigation/Routes";
-import { getIpfsUri, trim } from "../utils/util";
+import { getIpfsUri } from "../utils/util";
 import { AudioTrack } from "./AudioTrack";
 
 export const TokenCard = ({ token }: { token: Token }): JSX.Element => {

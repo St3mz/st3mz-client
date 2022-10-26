@@ -50,7 +50,6 @@ export const CreatePage = (): JSX.Element => {
   const [track, setTrack] = useState<File>();
   const [stems, setStems] = useState<File[]>([]);
   const [image, setImage] = useState<File>();
-  // const [cid, setCid] = useState<string>();
   const [metadata, setMetadata] = useState<Metadata>(initialMetadata);
   const [licenses, setLicenses] = useState<any[]>(initialLicenses);
   const [amount, setAmount] = useState<number>(0);
