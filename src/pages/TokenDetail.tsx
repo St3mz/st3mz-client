@@ -1,4 +1,4 @@
-import { Button } from "@material-tailwind/react";
+import { Button, Input } from "@material-tailwind/react";
 import { Contract, ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -7,7 +7,13 @@ import { auroraChain, getNetwork } from "../Config";
 import st3mzContractData from "../contracts/St3mz.json";
 import utilContractData from "../contracts/St3mzUtil.json";
 import { Token } from "../models/Token";
-import { getIpfsUri, launchToast, respToToken, ToastType } from "../utils/util";
+import {
+  getIpfsUri,
+  launchToast,
+  respToToken,
+  ToastType,
+  trim,
+} from "../utils/util";
 import axios from "axios";
 import { Metadata } from "../models/Metadata";
 import { AudioTrack } from "../components/AudioTrack";
@@ -19,6 +25,7 @@ export const TokenDetailPage = (): JSX.Element => {
   const { data: signer } = useSigner();
   const [token, setToken] = useState<Token>();
   const [metadata, setMetadata] = useState<Metadata>();
+  const [amount, setAmount] = useState<number>(0);
 
   useEffect(() => {
     if (id) getToken();
@@ -54,11 +61,9 @@ export const TokenDetailPage = (): JSX.Element => {
   };
 
   const buy = async () => {
-    if (!signer || !activeChain || !token) {
+    if (!signer || !activeChain || !token || !amount) {
       return;
     }
-
-    const amount = 2;
 
     const st3mzContract = new Contract(
       getNetwork(activeChain.id).st3mzAddress,
@@ -79,37 +84,106 @@ export const TokenDetailPage = (): JSX.Element => {
   };
 
   return (
-    <div>
-      <div>Detail Page</div>
-      {token && (
-        <div>
-          <div>ID: {token.id}</div>
-          <div>URI: {token.uri}</div>
-          <div>Minter: {token.minter}</div>
-          <div>Price: {ethers.utils.formatEther(token.price)}</div>
-          <div>Supply: {token.supply}</div>
-          <div>Available: {token.available}</div>
-          {metadata && (
-            <div className="text-gray-500 py-4">
-              <div>Name: {metadata.name}</div>
-              <div>Description: {metadata.description}</div>
-              <div>Duration: {metadata.duration}</div>
-              <div>Format: {metadata.format}</div>
-              <div>Genre: {metadata.genre}</div>
-              <div>License: {metadata.license}</div>
-              <div>BPM: {metadata.bpm}</div>
-              <AudioTrack url={getIpfsUri(metadata.file)} />
-              <div className="mt-5">STEMS</div>
-              {metadata.stems.map((stem, index) => (
-                <div className="py-2" key={index}>
-                  <div>{stem.description}</div>
-                  <AudioTrack url={getIpfsUri(stem.file)} />
-                </div>
-              ))}
+    <div className="flex">
+      {token && metadata && (
+        <>
+          <div className="w-2/5">
+            {metadata.image && (
+              <img className="rounded-xl" src={getIpfsUri(metadata.image)} />
+            )}
+            <div className="mt-3">
+              <span className="text-xl">{metadata.description}</span>
             </div>
-          )}
-          <Button onClick={buy}>Buy</Button>
-        </div>
+            <div>
+              <span>Creator</span>{" "}
+              <span className="text-xl font-bold">{trim(token.minter)}</span>
+            </div>
+            <div>
+              <span>Duration</span>{" "}
+              <span className="text-xl font-bold">{metadata.duration}</span>{" "}
+              <span className="text-xl">secs.</span>
+            </div>
+            <div>
+              <span>Format</span>{" "}
+              <span className="text-xl font-bold">{metadata.format}</span>
+            </div>
+            <div>
+              <span>Genre</span>{" "}
+              <span className="text-xl font-bold">{metadata.genre}</span>
+            </div>
+            <div>
+              <span>BPM</span>{" "}
+              <span className="text-xl font-bold">{metadata.bpm}</span>
+            </div>
+            <div>
+              <span>Supply</span>{" "}
+              <span className="text-xl font-bold">{token.supply}</span>
+            </div>
+            <div>
+              <span>Available</span>{" "}
+              <span className="text-xl font-bold">{token.available}</span>
+            </div>
+          </div>
+
+          <div className="w-3/5">
+            <div className="mb-4">
+              <span className="text-4xl font-bold">{metadata.name}</span>
+            </div>
+            <AudioTrack url={getIpfsUri(metadata.file)} />
+            <div className="mt-4 mb-2 text-2xl border-b border-b-secondary">
+              Stems
+            </div>
+            {metadata.stems.map((stem, index) => (
+              <div className="py-2" key={index}>
+                <div>{stem.description}</div>
+                <AudioTrack url={getIpfsUri(stem.file)} />
+              </div>
+            ))}
+
+            <div className="flex mt-4">
+              <div className="w-1/2">
+                <div className="mt-2 text-2xl border-b border-b-secondary">
+                  Licenses
+                </div>
+                {metadata.licenses.map((license) => (
+                  <div>
+                    {license.type}{" "}
+                    <span className="text-xl font-bold">
+                      {license.tokensRequired}
+                    </span>{" "}
+                    <span className="text-xl">
+                      {license.tokensRequired > 1 ? "tokens" : "token"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="w-1/2 flex flex-col items-center justify-center">
+                <div className="mb-4 border-2 border-primary p-2 rounded-xl">
+                  <span>Unit price</span>{" "}
+                  <span className="text-xl font-bold">
+                    Ξ{ethers.utils.formatEther(token.price)}
+                  </span>
+                </div>
+                <div className="flex">
+                  <div className="mr-2">
+                    <Input
+                      variant="outlined"
+                      label="Number of units"
+                      size="lg"
+                      type="number"
+                      color="orange"
+                      className="!text-white bg-sec-bg error"
+                      onChange={(e) => setAmount(Number(e.target.value) || 0)}
+                    />
+                  </div>
+                  <Button color="yellow" onClick={buy}>
+                    Buy
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

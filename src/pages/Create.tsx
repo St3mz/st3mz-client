@@ -1,34 +1,57 @@
-import { Button, Input } from "@material-tailwind/react";
+import { Button, Input, Checkbox, Textarea } from "@material-tailwind/react";
 import { Contract, ethers } from "ethers";
 import { useNetwork, useSigner } from "wagmi";
 import { getNetwork } from "../Config";
 import st3mzContractData from "../contracts/St3mz.json";
-import { Metadata, Stem } from "../models/Metadata";
+import { Metadata, Stem, License } from "../models/Metadata";
 import { launchToast, ToastType } from "../utils/util";
 import { NFTStorage, File } from "nft.storage";
 import { UploadAudio } from "../components/UploadAudio";
 import { useState } from "react";
 import { AudioTrack } from "../components/AudioTrack";
+import { UploadImage } from "../components/UploadImage";
 
 const initialMetadata: Metadata = {
   name: "",
   description: "",
   file: "",
+  image: "",
   genre: "",
   bpm: 0,
   format: "",
   duration: 0,
-  license: "",
+  licenses: [],
   stems: [],
 };
+
+const initialLicenses: any[] = [
+  {
+    selected: false,
+    type: "Basic",
+    tokensRequired: 0,
+  },
+  {
+    selected: false,
+    type: "Commercial",
+    tokensRequired: 0,
+  },
+  {
+    selected: false,
+    type: "Exclusive",
+  },
+];
 
 export const CreatePage = (): JSX.Element => {
   const { chain: activeChain } = useNetwork();
   const { data: signer } = useSigner();
   const [track, setTrack] = useState<File>();
   const [stems, setStems] = useState<File[]>([]);
+  const [image, setImage] = useState<File>();
   const [cid, setCid] = useState<string>();
   const [metadata, setMetadata] = useState<Metadata>(initialMetadata);
+  const [licenses, setLicenses] = useState<any[]>(initialLicenses);
+  const [amount, setAmount] = useState<number>(0);
+  const [price, setPrice] = useState<number>(0);
 
   const nftStorage = new NFTStorage({
     token:
@@ -36,12 +59,9 @@ export const CreatePage = (): JSX.Element => {
   });
 
   const create = async () => {
-    if (!signer || !activeChain || !cid) {
+    if (!signer || !activeChain || !cid || !price || !amount) {
       return;
     }
-
-    const amount = 5;
-    const price = ethers.utils.parseEther("0.1");
 
     const st3mzContract = new Contract(
       getNetwork(activeChain.id).st3mzAddress,
@@ -50,7 +70,11 @@ export const CreatePage = (): JSX.Element => {
     );
 
     try {
-      const tx = await st3mzContract.mint(`ipfs://${cid}`, amount, price);
+      const tx = await st3mzContract.mint(
+        `ipfs://${cid}`,
+        amount,
+        ethers.utils.parseEther(price.toString())
+      );
       const events = (await tx.wait()).events;
       console.log(events[0].args);
     } catch (e) {
@@ -60,14 +84,52 @@ export const CreatePage = (): JSX.Element => {
   };
 
   const storeIpfs = async () => {
-    if (!track || !stems.length) return;
-    const filesCid = await nftStorage.storeDirectory([track, ...stems]);
-    const metadataCid = await nftStorage.storeBlob(generateMetadata(filesCid));
+    if (!track || !stems.length || !image) return;
+
+    if (licenses[0].selected && !licenses[0].tokensRequired) {
+      launchToast("Please enter a name.", ToastType.Error);
+      return;
+    }
+
+    const licensesMeta: License[] = licenses
+      .filter((license) => license.selected)
+      .map((license) => {
+        return {
+          type: license.type,
+          tokensRequired:
+            license.type === "Exclusive" ? amount : license.tokensRequired,
+        };
+      });
+
+    if (!licensesMeta.length) {
+      launchToast("Please select at least one license.", ToastType.Error);
+      return;
+    }
+
+    if (
+      licensesMeta.findIndex(
+        (license) => !license.tokensRequired || license.tokensRequired > amount
+      ) > -1
+    ) {
+      launchToast(
+        "Invalid number of tokens required for license.",
+        ToastType.Error
+      );
+      return;
+    }
+
+    const filesCid = await nftStorage.storeDirectory([track, ...stems, image]);
+    const metadataCid = await nftStorage.storeBlob(
+      generateMetadata(filesCid, licensesMeta)
+    );
     console.log(metadataCid);
     setCid(metadataCid);
   };
 
-  const generateMetadata = (filesCid: string): File => {
+  const generateMetadata = (
+    filesCid: string,
+    licensesMeta: License[]
+  ): File => {
     const stemsMeta: Stem[] = stems.map((stem, i) => {
       return {
         description: metadata.stems[i].description,
@@ -78,8 +140,10 @@ export const CreatePage = (): JSX.Element => {
     const _metadata = {
       ...metadata,
       file: `ipfs://${filesCid}/${track!.name}`,
+      image: `ipfs://${filesCid}/${image!.name}`,
       format: track!.name.slice(track!.name.lastIndexOf(".") + 1),
       stems: stemsMeta,
+      licenses: licensesMeta,
     };
 
     return new File([JSON.stringify(_metadata)], "metadata.json", {
@@ -90,133 +154,222 @@ export const CreatePage = (): JSX.Element => {
   return (
     <div>
       <h1 className="text-6xl font-bold pb-2 text-center">Create NFT</h1>
-      <div className="mb-10">
-        <div>Upload track</div>
-        <UploadAudio
-          onUpload={(files) => setTrack(files[0])}
-          className="w-56"
-        ></UploadAudio>
-        {track && (
-          <AudioTrack
-            url={URL.createObjectURL(track)}
-            onDurationRead={(_duration) =>
-              setMetadata({ ...metadata, duration: _duration })
-            }
-          />
-        )}
-        <div className="w-1/2 py-2">
-          <Input
-            variant="outlined"
-            label="Name"
-            size="lg"
-            type="text"
-            color="orange"
-            className="!text-white bg-sec-bg error"
-            onChange={(e) => setMetadata({ ...metadata, name: e.target.value })}
-          />
-        </div>
-        <div className="w-1/2 py-2">
-          <Input
-            variant="outlined"
-            label="Description"
-            size="lg"
-            type="text"
-            color="orange"
-            className="!text-white bg-sec-bg error"
-            onChange={(e) =>
-              setMetadata({ ...metadata, description: e.target.value })
-            }
-          />
-        </div>
-        <div className="w-1/2 py-2">
-          <Input
-            variant="outlined"
-            label="Genre"
-            size="lg"
-            type="text"
-            color="orange"
-            className="!text-white bg-sec-bg error"
-            onChange={(e) =>
-              setMetadata({ ...metadata, genre: e.target.value })
-            }
-          />
-        </div>
-        <div className="w-1/2 py-2">
-          <Input
-            variant="outlined"
-            label="BPM"
-            size="lg"
-            type="number"
-            color="orange"
-            className="!text-white bg-sec-bg error"
-            onChange={(e) =>
-              setMetadata({ ...metadata, bpm: Number(e.target.value) })
-            }
-          />
-        </div>
-        <div className="w-1/2 py-2">
-          <Input
-            variant="outlined"
-            label="License"
-            size="lg"
-            type="text"
-            color="orange"
-            className="!text-white bg-sec-bg error"
-            onChange={(e) =>
-              setMetadata({ ...metadata, license: e.target.value })
-            }
-          />
-        </div>
-      </div>
-      <div>
-        <div>Upload stems</div>
-        <UploadAudio
-          onUpload={(files) => {
-            setStems([...stems, ...files]);
-            setMetadata({
-              ...metadata,
-              stems: [
-                ...metadata.stems,
-                ...Array(files.length).fill({ description: "", file: "" }),
-              ],
-            });
-          }}
-          multiple={true}
-          className="w-56"
-        ></UploadAudio>
-        <div className="p-10">
-          {stems.map((stem, index) => (
-            <div className="mb-2" key={index}>
-              <AudioTrack url={URL.createObjectURL(stem)} />
-              <div>{stem.name}</div>
-              <div className="w-1/2 py-2">
-                <Input
-                  variant="outlined"
-                  label="Description"
-                  size="lg"
-                  type="text"
-                  color="orange"
-                  className="!text-white bg-sec-bg error"
-                  onChange={(e) => {
-                    const stemsMeta = JSON.parse(
-                      JSON.stringify(metadata.stems)
-                    );
-                    console.log(stemsMeta);
-                    console.log("updating index", index);
-                    stemsMeta[index].description = e.target.value;
-                    console.log(stemsMeta);
-                    setMetadata({ ...metadata, stems: stemsMeta });
-                  }}
-                />
-              </div>
+      <div className="flex mt-12">
+        <div className="w-1/2 pr-12">
+          <div className="mb-5">
+            <Input
+              variant="outlined"
+              label="Name"
+              size="lg"
+              type="text"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, name: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-5">
+            <Textarea
+              variant="outlined"
+              label="Description"
+              size="lg"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, description: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-5">
+            <Input
+              variant="outlined"
+              label="Genre"
+              size="lg"
+              type="text"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, genre: e.target.value })
+              }
+            />
+          </div>
+          <div className="mb-5">
+            <Input
+              variant="outlined"
+              label="BPM"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) =>
+                setMetadata({ ...metadata, bpm: Number(e.target.value) })
+              }
+            />
+          </div>
+          <div className="mb-5">
+            <Input
+              variant="outlined"
+              label="Total supply"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) => setAmount(Number(e.target.value) || 0)}
+            />
+          </div>
+          <div className="mb-5">
+            <Input
+              variant="outlined"
+              label="Unit price"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) => setPrice(Number(e.target.value))}
+            />
+          </div>
+          <div className="mb-5">
+            <div className="flex items-center">
+              <Checkbox
+                color="orange"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[0].selected = e.target.checked;
+                  setLicenses(_licenses);
+                }}
+              />
+              <span>Basic</span>
             </div>
-          ))}
+            <Input
+              variant="outlined"
+              label="Amount required"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) => {
+                const _licenses = [...licenses];
+                _licenses[0].tokensRequired = e.target.value;
+                setLicenses(_licenses);
+              }}
+            />
+          </div>
+          <div className="mb-5">
+            <div className="flex items-center">
+              <Checkbox
+                color="orange"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[1].selected = e.target.checked;
+                  setLicenses(_licenses);
+                }}
+              />
+              <span>Commercial</span>
+            </div>
+            <Input
+              variant="outlined"
+              label="Amount required"
+              size="lg"
+              type="number"
+              color="orange"
+              className="!text-white bg-sec-bg error"
+              onChange={(e) => {
+                const _licenses = [...licenses];
+                _licenses[1].tokensRequired = e.target.value;
+                setLicenses(_licenses);
+              }}
+            />
+          </div>
+          <div className="mb-5">
+            <div className="flex items-center">
+              <Checkbox
+                color="orange"
+                onChange={(e) => {
+                  const _licenses = [...licenses];
+                  _licenses[2].selected = e.target.checked;
+                  setLicenses(_licenses);
+                }}
+              />
+              <span>Exclusive</span>
+              <span className="ml-5">All supply</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-1/2 pl-12">
+          <div className="">
+            <div>Upload track</div>
+            <UploadAudio
+              onUpload={(files) => setTrack(files[0])}
+              className="w-56"
+            ></UploadAudio>
+            {track && (
+              <AudioTrack
+                url={URL.createObjectURL(track)}
+                onDurationRead={(_duration) =>
+                  setMetadata({ ...metadata, duration: _duration })
+                }
+              />
+            )}
+          </div>
+          <div>
+            <div>Upload stems</div>
+            <UploadAudio
+              onUpload={(files) => {
+                setStems([...stems, ...files]);
+                setMetadata({
+                  ...metadata,
+                  stems: [
+                    ...metadata.stems,
+                    ...Array(files.length).fill({ description: "", file: "" }),
+                  ],
+                });
+              }}
+              multiple={true}
+              className="w-56"
+            ></UploadAudio>
+            <div className="p-10">
+              {stems.map((stem, index) => (
+                <div className="mb-5" key={index}>
+                  <AudioTrack url={URL.createObjectURL(stem)} />
+                  <div>{stem.name}</div>
+                  <div className="mb-5">
+                    <Input
+                      variant="outlined"
+                      label="Description"
+                      size="lg"
+                      type="text"
+                      color="orange"
+                      className="!text-white bg-sec-bg error"
+                      onChange={(e) => {
+                        const stemsMeta = JSON.parse(
+                          JSON.stringify(metadata.stems)
+                        );
+                        stemsMeta[index].description = e.target.value;
+                        setMetadata({ ...metadata, stems: stemsMeta });
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div>Upload cover</div>
+            <UploadImage
+              onUpload={(file: File) => setImage(file)}
+              className="h-56 w-56"
+            />
+          </div>
         </div>
       </div>
-      <div>
+
+      <div className="mt-5">
         <Button onClick={create}>Create</Button>
         <Button onClick={() => storeIpfs()}>Store</Button>
         <Button onClick={() => console.log(metadata)}>Check Meta</Button>
+        <Button onClick={() => console.log(licenses)}>Check Licenses</Button>
       </div>
     </div>
   );

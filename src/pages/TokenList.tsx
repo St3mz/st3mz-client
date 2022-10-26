@@ -4,8 +4,9 @@ import { useNetwork, useProvider } from "wagmi";
 import { auroraChain, getNetwork } from "../Config";
 import { Token } from "../models/Token";
 import utilContractData from "../contracts/St3mzUtil.json";
-import { launchToast, respToToken, ToastType } from "../utils/util";
+import { getIpfsUri, launchToast, respToToken, ToastType } from "../utils/util";
 import { TokenCard } from "../components/TokenCard";
+import axios from "axios";
 
 export const TokenListPage = (): JSX.Element => {
   const { chain: activeChain } = useNetwork();
@@ -29,8 +30,21 @@ export const TokenListPage = (): JSX.Element => {
 
     try {
       const resp = await utilContract.getTokens(12, 1, true);
-      console.log(resp);
-      setTokens(resp.map((item: any) => respToToken(item)));
+
+      const _tokens = await Promise.all(
+        resp.map(async (item: any) => {
+          const _token = respToToken(item);
+          let meta;
+          try {
+            meta = (await axios.get(getIpfsUri(_token.uri))).data;
+          } catch (e) {
+            console.log(e);
+          }
+          return { ..._token, metadata: meta };
+        })
+      );
+
+      setTokens(_tokens);
     } catch (e) {
       console.log(e);
       launchToast(
