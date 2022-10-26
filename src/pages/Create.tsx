@@ -56,8 +56,10 @@ export const CreatePage = (): JSX.Element => {
   const [price, setPrice] = useState<number>(0);
 
   const nftStorage = new NFTStorage({
-    token:
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDk3NzNEOTI2YWIzNDI3NTYxODZlZDVCMkU4RjkwMTNFMmEyMmRjN2UiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTY2NjQ2NDQxNjAxMSwibmFtZSI6InN0M216In0.Q2VmRzN_OtIZdQLImq4JMmhYyi6i9dxX0vMHvhLi7c4",
+    token: Buffer.from(
+      "ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnpkV0lpT2lKa2FXUTZaWFJvY2pvd2VEazNOek5FT1RJMllXSXpOREkzTlRZeE9EWmxaRFZDTWtVNFJqa3dNVE5GTW1FeU1tUmpOMlVpTENKcGMzTWlPaUp1Wm5RdGMzUnZjbUZuWlNJc0ltbGhkQ0k2TVRZMk5qUTJORFF4TmpBeE1Td2libUZ0WlNJNkluTjBNMjE2SW4wLlEyVm1Sek5fT3RJWmRRTEltcTRKTW1oWXlpNmk5ZHhYMHZNSHZoTGk3YzQ=",
+      "base64"
+    ).toString(),
   });
 
   const create = async () => {
@@ -398,11 +400,10 @@ export const CreatePage = (): JSX.Element => {
         </div>
       </div>
 
-      <div className="mt-5">
-        <Button onClick={create}>Create</Button>
-        <Button onClick={() => storeIpfs()}>Store</Button>
-        <Button onClick={() => console.log(metadata)}>Check Meta</Button>
-        <Button onClick={() => console.log(licenses)}>Check Licenses</Button>
+      <div className="mt-5 flex justify-center">
+        <Button color="yellow" onClick={create}>
+          Create NFT
+        </Button>
       </div>
     </div>
   );

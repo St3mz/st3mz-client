@@ -17,6 +17,7 @@ import {
 import axios from "axios";
 import { Metadata } from "../models/Metadata";
 import { AudioTrack } from "../components/AudioTrack";
+import { MdOpenInNew } from "react-icons/md";
 
 export const TokenDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
@@ -123,6 +124,12 @@ export const TokenDetailPage = (): JSX.Element => {
             <div>
               <span>Available</span>{" "}
               <span className="text-xl font-bold">{token.available}</span>
+            </div>
+            <div>
+              <span>IPFS link</span>{" "}
+              <a href={token.uri} target="_blank">
+                <MdOpenInNew className="h-6 w-6 inline -mt-1 cursor-pointer text-secondary" />
+              </a>
             </div>
           </div>
 
