@@ -18,6 +18,7 @@ import axios from "axios";
 import { Metadata } from "../models/Metadata";
 import { AudioTrack } from "../components/AudioTrack";
 import { MdOpenInNew } from "react-icons/md";
+import { Spinner } from "../components/common/Spinner";
 
 export const TokenDetailPage = (): JSX.Element => {
   const { id } = useParams<{ id: string }>();
@@ -27,6 +28,8 @@ export const TokenDetailPage = (): JSX.Element => {
   const [token, setToken] = useState<Token>();
   const [metadata, setMetadata] = useState<Metadata>();
   const [amount, setAmount] = useState<number>(0);
+  const [balance, setBalance] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     if (id) getToken();
@@ -36,17 +39,22 @@ export const TokenDetailPage = (): JSX.Element => {
     if (token) getMetadata();
   }, [token]);
 
-  const getToken = async () => {
-    if (!provider) {
-      return;
-    }
+  useEffect(() => {
+    if (signer && activeChain) getBalance();
+  }, [signer, activeChain]);
 
+  // Get token data from contract
+  const getToken = async () => {
+    if (!provider) return;
+
+    // Instantiate St3mz contract
     const utilContract = new Contract(
       getNetwork(activeChain?.id || auroraChain.id).utilAddress,
       utilContractData.abi,
       provider
     );
 
+    // Call getTokens() on contract
     try {
       const resp = await utilContract.getToken(id);
       setToken(respToToken(resp));
@@ -56,30 +64,57 @@ export const TokenDetailPage = (): JSX.Element => {
     }
   };
 
+  // Get token metadata from IPFS
   const getMetadata = async () => {
     const { data } = await axios.get(getIpfsUri(token!.uri));
     setMetadata(data);
   };
 
-  const buy = async () => {
-    if (!signer || !activeChain || !token || !amount) {
-      return;
-    }
+  // Get signer's token balance
+  const getBalance = async () => {
+    if (!signer || !activeChain) return;
 
+    // Instantiate St3mz contract
     const st3mzContract = new Contract(
       getNetwork(activeChain.id).st3mzAddress,
       st3mzContractData.abi,
       signer
     );
 
+    // Call balanceOf() on contract
+    try {
+      const resp = await st3mzContract.balanceOf(await signer.getAddress(), id);
+      setBalance(resp.toNumber());
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  // Buy token
+  const buy = async () => {
+    if (!signer || !activeChain || !token || !amount) return;
+
+    // Instantiate St3mz contract
+    const st3mzContract = new Contract(
+      getNetwork(activeChain.id).st3mzAddress,
+      st3mzContractData.abi,
+      signer
+    );
+
+    // Call buy() on contract
     try {
       const tx = await st3mzContract.buy(id, amount, {
         value: token.price.mul(amount).toString(),
       });
-      const events = (await tx.wait()).events;
-      console.log(events);
+      setLoading(true);
+      await tx.wait();
+      setLoading(false);
+      launchToast("Order completed with success.");
+      getToken();
+      getBalance();
     } catch (e) {
       console.log(e);
+      setLoading(false);
       launchToast("An error occurred buying the item.", ToastType.Error);
     }
   };
@@ -127,7 +162,7 @@ export const TokenDetailPage = (): JSX.Element => {
             </div>
             <div>
               <span>IPFS link</span>{" "}
-              <a href={token.uri} target="_blank">
+              <a href={getIpfsUri(token.uri)} target="_blank">
                 <MdOpenInNew className="h-6 w-6 inline -mt-1 cursor-pointer text-secondary" />
               </a>
             </div>
@@ -154,8 +189,8 @@ export const TokenDetailPage = (): JSX.Element => {
                 <div className="mt-2 text-2xl border-b border-b-secondary">
                   Licenses
                 </div>
-                {metadata.licenses.map((license) => (
-                  <div>
+                {metadata.licenses.map((license, index) => (
+                  <div key={index}>
                     {license.type}{" "}
                     <span className="text-xl font-bold">
                       {license.tokensRequired}
@@ -173,24 +208,47 @@ export const TokenDetailPage = (): JSX.Element => {
                     Ξ{ethers.utils.formatEther(token.price)}
                   </span>
                 </div>
-                <div className="flex">
-                  <div className="mr-2">
-                    <Input
-                      variant="outlined"
-                      label="Number of units"
-                      size="lg"
-                      type="number"
-                      color="orange"
-                      className="!text-white bg-sec-bg error"
-                      onChange={(e) => setAmount(Number(e.target.value) || 0)}
-                    />
+                {token.available > 0 ? (
+                  <div className="flex">
+                    {loading ? (
+                      <Spinner message="Processing order..." />
+                    ) : (
+                      <>
+                        <div className="mr-2">
+                          <Input
+                            variant="outlined"
+                            label="Number of units"
+                            size="lg"
+                            type="number"
+                            color="orange"
+                            className="!text-white bg-sec-bg error"
+                            onChange={(e) =>
+                              setAmount(Number(e.target.value) || 0)
+                            }
+                          />
+                        </div>
+                        <Button color="yellow" onClick={buy}>
+                          Buy
+                        </Button>
+                      </>
+                    )}
                   </div>
-                  <Button color="yellow" onClick={buy}>
-                    Buy
-                  </Button>
-                </div>
+                ) : (
+                  <div className="text-xl font-bold">Sold out</div>
+                )}
               </div>
             </div>
+            {balance > 0 && (
+              <div className="mt-8">
+                <span className="text-2xl border-2 border-secondary p-2 rounded-xl">
+                  <span>My balance:</span>
+                  <span className="ml-1">
+                    <span className="text-secondary font-bold">{balance}</span>{" "}
+                    {balance == 1 ? <span>token</span> : <span>tokens</span>}
+                  </span>
+                </span>
+              </div>
+            )}
           </div>
         </>
       )}

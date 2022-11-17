@@ -12,6 +12,7 @@ import { AudioTrack } from "../components/AudioTrack";
 import { UploadImage } from "../components/UploadImage";
 import { useNavigate } from "react-router-dom";
 import { DETAIL_ROUTE } from "../navigation/Routes";
+import { Spinner } from "../components/common/Spinner";
 
 const initialMetadata: Metadata = {
   name: "",
@@ -54,7 +55,9 @@ export const CreatePage = (): JSX.Element => {
   const [licenses, setLicenses] = useState<any[]>(initialLicenses);
   const [amount, setAmount] = useState<number>(0);
   const [price, setPrice] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(false);
 
+  // Create instance of NFTStorage client
   const nftStorage = new NFTStorage({
     token: Buffer.from(
       "ZXlKaGJHY2lPaUpJVXpJMU5pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SnpkV0lpT2lKa2FXUTZaWFJvY2pvd2VEazNOek5FT1RJMllXSXpOREkzTlRZeE9EWmxaRFZDTWtVNFJqa3dNVE5GTW1FeU1tUmpOMlVpTENKcGMzTWlPaUp1Wm5RdGMzUnZjbUZuWlNJc0ltbGhkQ0k2TVRZMk5qUTJORFF4TmpBeE1Td2libUZ0WlNJNkluTjBNMjE2SW4wLlEyVm1Sek5fT3RJWmRRTEltcTRKTW1oWXlpNmk5ZHhYMHZNSHZoTGk3YzQ=",
@@ -62,35 +65,41 @@ export const CreatePage = (): JSX.Element => {
     ).toString(),
   });
 
+  // Create new NFT
   const create = async () => {
-    if (!signer || !activeChain || !price || !amount) {
-      return;
-    }
+    if (!signer || !activeChain || !price || !amount) return;
 
+    // Store files on IPFS
     const cid = await storeIpfs();
 
+    // Instantiate St3mz contract
     const st3mzContract = new Contract(
       getNetwork(activeChain.id).st3mzAddress,
       st3mzContractData.abi,
       signer
     );
 
+    // Send transaction
     try {
       const tx = await st3mzContract.mint(
         `ipfs://${cid}`,
         amount,
         ethers.utils.parseEther(price.toString())
       );
+      setLoading(true);
       const events = (await tx.wait()).events;
       const id = Number(events[0].args.id);
+      setLoading(false);
       launchToast("NFT created successfully.");
       navigate(DETAIL_ROUTE.replace(":id", id.toString()));
     } catch (e) {
       console.log(e);
+      setLoading(false);
       launchToast("An error occurred creating the item.", ToastType.Error);
     }
   };
 
+  // Store files on IPFS
   const storeIpfs = async () => {
     if (!track || !stems.length || !image) return;
 
@@ -99,6 +108,7 @@ export const CreatePage = (): JSX.Element => {
       return;
     }
 
+    // Map licenses data
     const licensesMeta: License[] = licenses
       .filter((license) => license.selected)
       .map((license) => {
@@ -126,16 +136,20 @@ export const CreatePage = (): JSX.Element => {
       return;
     }
 
+    // Store audio files and image on IPFS directory
     launchToast("Uploading files to IPFS...", ToastType.Info);
     const filesCid = await nftStorage.storeDirectory([track, ...stems, image]);
 
+    // Store metadata on IPFS
     launchToast("Uploading metadata to IPFS...", ToastType.Info);
     const metadataCid = await nftStorage.storeBlob(
       generateMetadata(filesCid, licensesMeta)
     );
+
     return metadataCid;
   };
 
+  // Generate metadata JSON file
   const generateMetadata = (
     filesCid: string,
     licensesMeta: License[]
@@ -401,9 +415,13 @@ export const CreatePage = (): JSX.Element => {
       </div>
 
       <div className="mt-5 flex justify-center">
-        <Button color="yellow" onClick={create}>
-          Create NFT
-        </Button>
+        {loading ? (
+          <Spinner message="Creating NFT..." />
+        ) : (
+          <Button color="yellow" onClick={create}>
+            Create NFT
+          </Button>
+        )}
       </div>
     </div>
   );

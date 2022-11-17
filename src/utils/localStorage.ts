@@ -1,5 +1,3 @@
-import { auroraChain, ChainId, CHAINS } from "../Config";
-
 const STORAGE_BANNER_DISMISSED = "ST3MZ_banner_dismissed";
 
 export const getBannerDismissed = (): boolean => {
