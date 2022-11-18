@@ -64,8 +64,8 @@ const networks: Network[] = [
   {
     chainId: auroraTestnetChain.id,
     name: "Testnet",
-    st3mzAddress: "0x36c69fefb608b15150021c96d15d3678f1fe3929.",
-    utilAddress: "0x17A559575182929eBb539922287D9E2C78A2fca5.",
+    st3mzAddress: "0x36C69fEFb608b15150021C96D15D3678F1FE3929",
+    utilAddress: "0x17A559575182929eBb539922287D9E2C78A2fca5",
   },
   {
     chainId: auroraChain.id,

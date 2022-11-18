@@ -5,7 +5,7 @@ import { getNetwork } from "../Config";
 import st3mzContractData from "../contracts/St3mz.json";
 import { Metadata, Stem, License } from "../models/Metadata";
 import { launchToast, ToastType } from "../utils/util";
-import { NFTStorage, File } from "nft.storage";
+import { NFTStorage, File, CIDString } from "nft.storage";
 import { UploadAudio } from "../components/UploadAudio";
 import { useState } from "react";
 import { AudioTrack } from "../components/AudioTrack";
@@ -56,6 +56,7 @@ export const CreatePage = (): JSX.Element => {
   const [amount, setAmount] = useState<number>(0);
   const [price, setPrice] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  const [cid, setCid] = useState<CIDString | undefined>();
 
   // Create instance of NFTStorage client
   const nftStorage = new NFTStorage({
@@ -69,8 +70,13 @@ export const CreatePage = (): JSX.Element => {
   const create = async () => {
     if (!signer || !activeChain || !price || !amount) return;
 
-    // Store files on IPFS
-    const cid = await storeIpfs();
+    let _cid = cid;
+    if (!_cid) {
+      // Store files on IPFS
+      const _cid = await storeIpfs();
+      if (!_cid) return;
+      setCid(_cid);
+    }
 
     // Instantiate St3mz contract
     const st3mzContract = new Contract(
@@ -82,7 +88,7 @@ export const CreatePage = (): JSX.Element => {
     // Send transaction
     try {
       const tx = await st3mzContract.mint(
-        `ipfs://${cid}`,
+        `ipfs://${_cid}`,
         amount,
         ethers.utils.parseEther(price.toString())
       );
