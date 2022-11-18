@@ -66,8 +66,12 @@ export const TokenDetailPage = (): JSX.Element => {
 
   // Get token metadata from IPFS
   const getMetadata = async () => {
-    const { data } = await axios.get(getIpfsUri(token!.uri));
-    setMetadata(data);
+    try {
+      const { data } = await axios.get(getIpfsUri(token!.uri));
+      setMetadata(data);
+    } catch (e) {
+      // console.log(e);
+    }
   };
 
   // Get signer's token balance
