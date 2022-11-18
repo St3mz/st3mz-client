@@ -18,7 +18,7 @@ export const NetworkBanner = (): JSX.Element => {
       return (
         <div className={"flex justify-center items-center bg-primary p-2"}>
           <MdErrorOutline className="h-5 w-5 mr-1" />
-          <span>You are using {APP_NAME} in test network.</span>
+          <span>You are using {APP_NAME} in Aurora test network.</span>
         </div>
       );
     default:
